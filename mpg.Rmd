@@ -1,0 +1,81 @@
+---
+title: "MPG and transmission"
+author: "Shuai Wang"
+date: "Sunday, May 24, 2015"
+output: pdf_document
+---
+
+## Executive Summary
+
+To attract more readers of our magazine, we want to explore the relationship between a set of variables and miles per gallon (MPG), especially that between automatic/manual transmission and MPG. After investigating it, we find that manual transmission do have larger MPG than automatic one with high statistical significance if unadjusted for all other variables. However, when looking at all the variables available, we discover that the most two significant variables related to MPG are car weight and gross horsepower, and after adjusting for them, automatic/manual transmission is no longer significantly related to MPG. In fact, all other variables available become insignificant after adjusting for them.
+
+## Introduction
+
+Nowadays the interest in fuel efficiency is still hot for both individuals and companies, as the overall economy has been weak for years. Articles about the relationship between a set of automobile related variables and miles per gallon (MPG) will be very attractive in our *Motor Trend* magazine, especially about the relationship and its magnitude between automatic/manual transmission and MPG, which has a lot of rumors. 
+
+## Exploratory Data Analysis
+
+The data available to use is the `mtcars` dataset in the `R` software, which is in fact collected by us in 1974. This data is attached to `R`, so there is no need to read it in.
+
+First let's look at the relationship between MPG and automatic/manual transmission and see what we can get (Appendix A). Note that the x axis value is 1 for manual transmission, and 0 for automatic.
+
+From this plot, one may see that manual transmission will have larger MPG than automatic one if unadjusted for any other variable. We will confirm it later in the inference section.
+
+Now we want to explore what will happen if adjusted. First take a look at the full model with all predictors included.
+
+```{r}
+summary(lm(mpg~.-cyl-gear+as.factor(cyl)+as.factor(gear),data=mtcars))$coef
+```
+
+From the result, We can see car weight has the smallest p value. So we will choose it as our initial model and add other variables one by one, and see which one is more significant by looking at their p values.
+
+```{r}
+fit<-lm(mpg~wt,data=mtcars)
+sapply(c("hp","vs","carb","drat","am","qsec"), function(var){
+    fit2<-update(fit,paste0("mpg~wt+",var))
+    anova(fit,fit2)[2,6]})
+```
+
+So you can see horsepower has the least p-value, which is less than 0.05. Add it into the model, repeat the above process, and this time no other variables can be added, because their p-values are all bigger than 0.05 (output is omitted). Hence we will only choose car weight and horsepower as our predictors.
+
+## Statistical Inference
+
+First let us look at the unadjusted regression with only the automatic/manual transmission as the predictor.
+
+```{r}
+options(scipen=5)
+fit<-lm(mpg~am,data=mtcars)
+coef<-summary(fit)$coef
+coef
+```
+
+The regression coefficient for automatic/manual transmission (variable `am`) is `r coef(fit)[2]`. It means that, the expected MPG for cars with manual transmission is `r coef(fit)[2]` miles per US gallon more than that for cars with automatic transmission. Its p value is `r coef[2,4]`, which is the probability of obtaining evidence as extreme or more extreme than what we have obtained, under the null hypothesis that the regression coefficient is zero, i.e., there is no difference on the expected MPG between manual transmission and automatic transmission. This value is now very small, so we reject the null hypothesis and conclude that manual transmission has a higher expected MPG than automatic transmission with significance level `r coef[2,4]`.
+
+The residual plot looks good, scattering around 0 with roughly equal variability (Appendex B).
+
+Because we already get a final model with only car weight and horsepower as predictors, let us look at the relation between automatic/manual transmission and MPG adjusted for them.
+
+```{r}
+fit<-lm(mpg~wt+hp+am,data=mtcars)
+coef<-summary(fit)$coef
+coef
+```
+
+The regression coefficient for automatic/manual transmission (variable `am`) is `r coef(fit)[4]` with p value `r coef[4,4]`, which is the probability of obtaining evidence as extreme or more extreme than what we have obtained, under the null hypothesis that the regression coefficient is zero after adjusting for reciprocals of car weight and horsepower. This value is now very big, so we fail to reject the null hypothesis and conclude that there is no difference on the expected MPG between manual transmission and automatic transmission for the cars with the same car weight and horsepower.
+
+The residual plot is also good in this case (Appendix C).
+
+```{r}
+
+```
+
+```{r,echo=FALSE,fig.height=4}
+mtcars$am<-factor(mtcars$am,labels=c("Automatic","Manual"))
+boxplot(mpg~am,data=mtcars,main="Appendix A. Boxplot of MPG by Transmission Type")
+fit<-lm(mpg~am,data=mtcars)
+plot(resid(fit)~fitted(fit),xlab="Fitted Values",ylab="Residuals",main="Appendix B. Residual Plot for the Unadjusted Model")
+fit<-lm(mpg~wt+hp+am,data=mtcars)
+plot(resid(fit)~fitted(fit),xlab="Fitted Values",ylab="Residuals",main="Appendix C. Residual Plot for the Model Adjusted for Weight and Horsepower")
+```
+
+Q-Q plot

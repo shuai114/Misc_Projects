@@ -1,0 +1,97 @@
+---
+title: "Human Qualitative Activity Recognition"
+author: "Shuai Wang"
+output: html_document
+---
+
+## Introduction
+
+Nowadays new technologies make it possible to collect a large amount of data about personal activity relatively inexpensively, and devices such as Jawbone Up, Nike FuelBand and Fitbit are used by a group of enthusiasts in measuring their personal activities regularly to improve their health or find patterns in their behavior. However, the current technologies and devices usually focus on how much activity is done, and rarely on how well it is performed. In fact, the investigation of human activity quality potentially provides useful information for a large variety of applications, such as sports training.
+
+To answer this question, an experiment about weight lifting was carried out on six young health participants, and a variety of data was collected using the accelerometers on their belt, forearm, arm, and dumbell, while they were performing barbell lifts correctly and incorrectly in 5 different ways. For more details, see the section on the Weight Lifting Exercise Dataset at the website: http://groupware.les.inf.puc-rio.br/har
+
+Now we are going to use this data and try to predict which one of those five fashions they actually did based on the measurements by machine learning technique. It is the project from the Practical Machine Learning course offerred by the Johns Hopkins Univerisity on coursera.
+
+## Data Preparation and Exploration
+
+The course website provides the training and test data sets for this project. First we need download them, and take a look at the training data. Notice that we should not touch the test data until the final testing stage.
+
+```{r,results='hide'}
+training<-read.csv("pml-training.csv")
+testing<-read.csv("pml-testing.csv")
+summary(training)
+```
+
+From the summary output for the training dataset (I hide the output here because it is long), we can see that there are many variables with a lot of missing data values. Let's find out how many variables have missing data and what proportion of data values is missing. Notice that there are two kinds of variables, numeric variables (including integers) and factor variables. The missing values of numeric variables are denoted by `NA` and those of factor variables are empty strings.
+
+```{r}
+missing<-sapply(training, function(var) mean(is.na(var)|var==""))
+table(missing)
+```
+
+```{r,echo=FALSE,results='hide'}
+propmiss<-round(as.numeric(names(table(missing))[2])*100)
+```
+
+So there are only two missing patterns here. One is the pattern without missing data, another is the pattern with about `r propmiss` percent missing. Of course we don't want to look at the latter for our prediction purpose. So let us remove them to facilitate variable selection.
+
+```{r}
+train<-training[,missing==0]
+```
+
+In the rest `r dim(train)[2]` variables, one is the outcome `classe`, specifying the manner in which they did the exercise. This is the variable we are trying to predict in the test dataset. Another variable is `X`, which is easily seen to be the observation number. Other than them, all other variables are subject to our exploration in finding out the good predictors.
+
+Because the outcome variable `classe` has five classes, I don't think it is appropriate to use correlation to find out good predictors. Thus I used boxplot to figure it out. Although it may seem inefficient to plot the graph for each variable and decide by observing the graph, it turns out to be a good choice, because I get a good prediction in the end.
+
+The following is an example of the boxplots, where I consider the variable `roll_belt`. I actually have done it for each of the `r dim(train)[2]-2` non-missing variables excluding `classe` and `X`.
+
+```{r}
+boxplot(roll_belt~classe,data=train,xlab='Manner in Barbell Lift',ylab='Variable Under Consideration',main='Boxplot of the Focused Variable across Different Manners')
+```
+
+From this plot, one can see the distributions for the variable `roll_belt` are different across the five classes of the outcome variable `classe`. Essentially the distribution among type `A` is quite different from those among other four types. Thus it might be a good predictor, because I think it could be used to discriminate type `A` from the other four. Following this strategy, I find a bunch of good predictors.
+
+## Classifier Training
+
+Before classification, we need split the training data into training set and cross validation set, so we can evaluate each of our classifiers using the cross validation set, and choose the best model as our final model. So let's do it!
+
+```{r}
+library(caret)
+set.seed(56789)
+inTrain<-createDataPartition(y=training$classe,p=0.75,list=F)
+train<-training[inTrain,]
+cvset<-training[-inTrain,]
+```
+
+Here I use the `createDataPartition` function in the `caret` package to do the data slicing. Notice that I also set the seed, because I want my work to be reproducible.
+
+Now it is time to explore all kinds of models. We have learned many models in the Practical Machine Learning course, and now just try them out! Of course, each model has its pros and cons, so I have tried them out in an order. Simple models first, and computationally intensive models last.
+
+For variables, I just choose some intuitively promising variables from the pool of good predictors I have got in my previous exploratory analysis. I have tried many different combinations, and then choose the best combination based on cross validation.
+
+The following is one example of the models I trained. In this example, I choose Random Forests as the algorithm, and variables `roll_belt`, `magnet_belt_y`, `magnet_arm_x`, `yaw_dumbbell`, `magnet_dumbbell_x`, `accel_forearm_x` as the predictors. (Caution: think more before running it, because it takes about half an hour to run on my computer.)
+
+```{r,cache=TRUE}
+modFit<-train(classe~roll_belt+magnet_belt_y+magnet_arm_x+yaw_dumbbell+magnet_dumbbell_x+accel_forearm_x,data=train,method="rf")
+```
+
+Then I use the cross validation set to evaluate this model. Although kappa is perferable when dealing with multiclass outcome, I choose to make my decision based on accuracy in this project, because we are going to be evaluated based on accuracy in the associated programming assignment. The output from the cross validation is as follows.
+
+```{r}
+confusionMatrix(cvset$classe,predict(modFit,newdata=cvset))
+```
+
+From the output, you can see the prediction accuracy of this model is about `0.94`, which I think is pretty good. Its kappa value is also high, about `0.92`. The expected out of sample error rate should be one minus the accuracy, i.e. about `0.06`, because I haven't used the cross validation set in the training process at this point.
+
+Now I got a bunch of models using different algorithms and different predictors, along with their accuracies evaluated on the cross validation set. Then I simply choose the one with the highest accuracy. The final model is the example model I present above. I am pretty satisfied with this model and do not try any more models, because I know it is wise to know when to stop, otherwise one will never finish this project, since 100 percent accuracy is nearly impossible.
+
+#Classifier Evaluation
+
+After finishing the training process, I need to evaluate the final model on the test dataset provided by the course website for this project. So I rerun the final model on the original training data, the data before spliting in the training process, and then predict on the test dataset, which contains 20 test cases. (Caution: think more before running it, because it takes about half an hour to run on my computer.)
+
+```{r,cache=TRUE}
+modFitFinal<-train(classe~roll_belt+magnet_belt_y+magnet_arm_x+yaw_dumbbell+magnet_dumbbell_x+accel_forearm_x,data=training,method="rf")
+answer<-predict(modFitFinal,newdata=testing)
+```
+
+After submission of the prediction result following the submission instruction, I got only one incorrect out of the 20 test cases, which again confirms that the expected out of sample error rate I got is correct.

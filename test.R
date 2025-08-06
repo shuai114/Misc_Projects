@@ -1,0 +1,11 @@
+x<-matrix(1:4,2,2)
+mat<-makeCacheMatrix(x)
+cacheSolve(mat)
+solve(x)
+y<-cbind(1:3,c(2,3,2),3:1)
+maty<-makeCacheMatrix(y)
+cacheSolve(maty)
+solve(y)
+
+cacheSolve(mat)
+cacheSolve(maty)
