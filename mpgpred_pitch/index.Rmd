@@ -1,0 +1,53 @@
+---
+title       : MPG Prediction Website
+subtitle    : Just a Start
+author      : Shuai Wang
+job         : Data Product Developer
+logo        : carlogo.png
+framework   : io2012        # {io2012, html5slides, shower, dzslides, ...}
+highlighter : highlight.js  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow      # 
+widgets     : []            # {mathjax, quiz, bootstrap}
+mode        : selfcontained # {standalone, draft}
+knit        : slidify::knit2slides
+---
+
+## MPG Prediction Website
+
+1. A simple miles per US gallon (MPG) prediction website for automobiles  
+https://shuai114.shinyapps.io/mpgpred/
+2. Just input car weight, number of cylinders, and transmission type (automatic or manual), and the predicted MPG will be given to you.
+3. Developed as a shiny application
+4. Prediction is based on the `mtcars` dataset in the `R` software
+
+--- .class #id 
+
+## Prediction Algorithm
+
+Ordinary multiple linear regression on the three chosen predictors is used for the prediction. To avoid negative MPG one may get, reciprocals of car weight and number of cylinders are used instead. The result of the multiple linear regression is as follows. Note that the unit used for the car weight in the regression is pound instead of 1000 pounds in the `mtcars` dataset in `R`.
+
+```{r}
+summary(lm(mpg~I(1/wt/1000)+I(1/cyl)+am,data=mtcars))$coef
+```
+
+---
+
+## Prediction Algorithm (Continued)
+
+Based on the regression result, the prediction is got by simply plugging in the three features of a car into the regression equation. The following is the related `R` function used.
+
+```{r}
+predictmpg<-function(wt,cyl,am) {
+    round(2.0604201+30963.3035459/wt+42.8135255/cyl-0.3976339*am,1)
+}
+```
+
+---
+
+## Improvement
+
+The website is a good start, although it is simple in the beginning, and we will improve it in the future at least in the following ways.
+
+1. Get better data. The `mtcars` dataset has only 11 variables for only 32 automobiles, which are 1973-74 models. For better prediction, We need more automobiles of all kinds of models, which should be representative of all automobiles ever manufactured, and we need all possible features related to car MPG.
+2. Have better algorithm. The predictors used in the prediction need to be selected wisely and carefully, and we may choose a better algorithm than the ordinary multiple linear regression, although the latter may be a good start.
+3. Have better website. We will make the website look better and much easier to use.

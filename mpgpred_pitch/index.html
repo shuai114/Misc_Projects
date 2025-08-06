@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MPG Prediction Website</title>
+  <meta charset="utf-8">
+  <meta name="description" content="MPG Prediction Website">
+  <meta name="author" content="Shuai Wang">
+  <meta name="generator" content="slidify" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/default.css" media="all" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/phone.css" 
+    media="only screen and (max-device-width: 480px)" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/slidify.css" >
+  <link rel="stylesheet" href="libraries/highlighters/highlight.js/css/tomorrow.css" />
+  <base target="_blank"> <!-- This amazingness opens all links in a new tab. -->  <link rel=stylesheet href="./assets/css/ribbons.css"></link>
+
+  
+  <!-- Grab CDN jQuery, fall back to local if offline -->
+  <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.min.js"></script>
+  <script>window.jQuery || document.write('<script src="libraries/widgets/quiz/js/jquery.js"><\/script>')</script> 
+  <script data-main="libraries/frameworks/io2012/js/slides" 
+    src="libraries/frameworks/io2012/js/require-1.0.8.min.js">
+  </script>
+  
+  
+
+</head>
+<body style="opacity: 0">
+  <slides class="layout-widescreen">
+    
+    <!-- LOGO SLIDE -->
+        <slide class="title-slide segue nobackground">
+  <aside class="gdbar">
+    <img src="assets/img/carlogo.png">
+  </aside>
+  <hgroup class="auto-fadein">
+    <h1>MPG Prediction Website</h1>
+    <h2>Just a Start</h2>
+    <p>Shuai Wang<br/>Data Product Developer</p>
+  </hgroup>
+  <article></article>  
+</slide>
+    
+
+    <!-- SLIDES -->
+    <slide class="" id="slide-1" style="background:;">
+  <hgroup>
+    <h2>MPG Prediction Website</h2>
+  </hgroup>
+  <article data-timings="">
+    <ol>
+<li>A simple miles per US gallon (MPG) prediction website for automobiles<br>
+<a href="https://shuai114.shinyapps.io/mpgpred/">https://shuai114.shinyapps.io/mpgpred/</a></li>
+<li>Just input car weight, number of cylinders, and transmission type (automatic or manual), and the predicted MPG will be given to you.</li>
+<li>Developed as a shiny application</li>
+<li>Prediction is based on the <code>mtcars</code> dataset in the <code>R</code> software</li>
+</ol>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Prediction Algorithm</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Ordinary multiple linear regression on the three chosen predictors is used for the prediction. To avoid negative MPG one may get, reciprocals of car weight and number of cylinders are used instead. The result of the multiple linear regression is as follows. Note that the unit used for the car weight in the regression is pound instead of 1000 pounds in the <code>mtcars</code> dataset in <code>R</code>.</p>
+
+<pre><code class="r">summary(lm(mpg~I(1/wt/1000)+I(1/cyl)+am,data=mtcars))$coef
+</code></pre>
+
+<pre><code>##                   Estimate  Std. Error    t value     Pr(&gt;|t|)
+## (Intercept)      2.0604201    1.624091  1.2686608 0.2150082496
+## I(1/wt/1000) 30963.3035459 7233.494584  4.2805456 0.0001972304
+## I(1/cyl)        42.8135255   12.479228  3.4307831 0.0018864362
+## am              -0.3976339    1.228466 -0.3236833 0.7485831296
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-3" style="background:;">
+  <hgroup>
+    <h2>Prediction Algorithm (Continued)</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Based on the regression result, the prediction is got by simply plugging in the three features of a car into the regression equation. The following is the related <code>R</code> function used.</p>
+
+<pre><code class="r">predictmpg&lt;-function(wt,cyl,am) {
+    round(2.0604201+30963.3035459/wt+42.8135255/cyl-0.3976339*am,1)
+}
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-4" style="background:;">
+  <hgroup>
+    <h2>Improvement</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>The website is a good start, although it is simple in the beginning, and we will improve it in the future at least in the following ways.</p>
+
+<ol>
+<li>Get better data. The <code>mtcars</code> dataset has only 11 variables for only 32 automobiles, which are 1973-74 models. For better prediction, We need more automobiles of all kinds of models, which should be representative of all automobiles ever manufactured, and we need all possible features related to car MPG.</li>
+<li>Have better algorithm. The predictors used in the prediction need to be selected wisely and carefully, and we may choose a better algorithm than the ordinary multiple linear regression, although the latter may be a good start.</li>
+<li>Have better website. We will make the website look better and much easier to use.</li>
+</ol>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+    <slide class="backdrop"></slide>
+  </slides>
+  <div class="pagination pagination-small" id='io2012-ptoc' style="display:none;">
+    <ul>
+      <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=1 title='MPG Prediction Website'>
+         1
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=2 title='Prediction Algorithm'>
+         2
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=3 title='Prediction Algorithm (Continued)'>
+         3
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=4 title='Improvement'>
+         4
+      </a>
+    </li>
+  </ul>
+  </div>  <!--[if IE]>
+    <script 
+      src="http://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js">  
+    </script>
+    <script>CFInstall.check({mode: 'overlay'});</script>
+  <![endif]-->
+</body>
+  <!-- Load Javascripts for Widgets -->
+  
+  <!-- LOAD HIGHLIGHTER JS FILES -->
+  <script src="libraries/highlighters/highlight.js/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <!-- DONE LOADING HIGHLIGHTER JS FILES -->
+   
+  </html>
